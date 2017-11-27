@@ -7,7 +7,6 @@
 /tmp/*
 /vendor/*
 /tests/*
-/bin/*
 composer.lock
 phpunit.xml.dist
 plugins/*
