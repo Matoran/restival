@@ -46,9 +46,8 @@ class SpotifyComponent extends Component
         )->body())->access_token;
     }
 
-    public function getArtistFromName($name)
+    public function getArtistByName($name)
     {
-        debug($name);
         $client = new Client([
             'headers' => [
                 'Authorization' => 'Bearer ' . $this->token(),
@@ -61,6 +60,19 @@ class SpotifyComponent extends Component
                 'q' => $name,
                 'type' => 'artist'
             ]
+        )->body())->artists->items[0];
+    }
+
+    public function getArtistById($id)
+    {
+        $client = new Client([
+            'headers' => [
+                'Authorization' => 'Bearer ' . $this->token(),
+                'Accept' => 'application/json'
+            ]
+        ]);
+        return json_decode($client->get(
+            $this->base . '/v1/artists/' . $id
         )->body());
     }
 

@@ -43,39 +43,15 @@ use Cake\Routing\Route\DashedRoute;
  */
 Router::defaultRouteClass(DashedRoute::class);
 
+
 Router::scope('/', function (RouteBuilder $routes) {
-    /**
-     * Here, we are connecting '/' (base path) to a controller called 'Pages',
-     * its action called 'display', and we pass a param to select the view file
-     * to use (in this case, src/Template/Pages/home.ctp)...
-     */
-    $routes->connect('/', ['controller' => 'Pages', 'action' => 'display', 'home']);
-
-    /**
-     * ...and connect the rest of 'Pages' controller's URLs.
-     */
-    $routes->connect('/pages/*', ['controller' => 'Pages', 'action' => 'display']);
-
-    $routes->connect('/spotify/search/:name', ['controller' => 'Artists', 'action' => 'search']);
-    $routes->connect('/spotify/token', ['controller' => 'Artists', 'action' => 'token']);
-
-    /**
-     * Connect catchall routes for all controllers.
-     *
-     * Using the argument `DashedRoute`, the `fallbacks` method is a shortcut for
-     *    `$routes->connect('/:controller', ['action' => 'index'], ['routeClass' => 'DashedRoute']);`
-     *    `$routes->connect('/:controller/:action/*', [], ['routeClass' => 'DashedRoute']);`
-     *
-     * Any route class can be used with this method, such as:
-     * - DashedRoute
-     * - InflectedRoute
-     * - Route
-     * - Or your own route class
-     *
-     * You can remove these routes once you've connected the
-     * routes you want in your application.
-     */
-    $routes->fallbacks(DashedRoute::class);
+    $routes->get('/artists/:name/id', ['controller' => 'artists', 'action' => 'id']);
+    $routes->get('/artists/:id/events', ['controller' => 'artists', 'action' => 'events']);
+    $routes->get('/artists/:id/music', ['controller' => 'artists', 'action' => 'id']);
+    $routes->get('/artists/:id/data', ['controller' => 'artists', 'action' => 'data']);
+    $routes->get('/events/around/:address', ['controller' => 'events', 'action' => 'around']);
+    $routes->get('/events/:id/data', ['controller' => 'events', 'action' => 'data']);
+    $routes->get('/events/:id/music', ['controller' => 'events', 'action' => 'events']);
 });
 
 /**
