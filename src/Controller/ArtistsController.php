@@ -101,8 +101,9 @@ class ArtistsController extends AppController
                 'address' => $event->venue->name . ', ' . $event->venue->city . ', ' . $event->venue->region . ', ' . $event->venue->country
                 ];
         }
+        debug($events);
         $this->set(compact('events'));
-        //$this->set('_serialize', ['events']);
+        $this->set('_serialize', ['events']);
     }
 
     /**

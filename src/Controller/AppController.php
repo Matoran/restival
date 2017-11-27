@@ -46,6 +46,7 @@ class AppController extends Controller
         $this->loadComponent('Spotify');
         $this->loadComponent('Eventful');
         $this->loadComponent('BandsInTown');
+        $this->loadComponent('GoogleMaps');
     }
 
     public function beforeRender(Event $event)
