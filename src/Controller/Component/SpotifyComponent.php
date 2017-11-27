@@ -13,13 +13,45 @@ use Cake\Http\Client;
 
 class SpotifyComponent extends Component
 {
-    private $base = "https://api.spotify.com";
+    private $base = 'https://api.spotify.com';
+    private $client = '919405e7e15a4ecd9d4e4e55c178ce91';
+    private $secret = '957b7cb9e20a46e1b058c1e4dde2aa03';
 
-    public function getArtistFromName($name)
+
+    /*
+     *
+     *
+     * const options = {
+        url: "https://accounts.spotify.com/api/token",
+        method: "POST",
+        headers: {
+            'Authorization': `Basic ${b64Key}`,
+        },
+        form: {
+            'grant_type': "client_credentials",
+        },
+    };
+     */
+    public function token()
     {
         $client = new Client([
             'headers' => [
-                'Authorization' => 'Bearer BQCxgY3s4B5KWSx709Y2TZ-mZAF8OtbOyYUEnj-yyBBMKPdAI0tB5pRE9grosCqOqsi5qpzWFNc4Y2Rf3N8sYFuZdM8BkVb6rX_UMNUKHVGpxdT1E9J7ZBcq-zaRATdfHrYDC64FBRM',
+                'Authorization' => 'Basic ' . base64_encode($this->client . ':' . $this->secret)
+            ]
+        ]);
+        return json_decode($client->post('https://accounts.spotify.com/api/token',
+            [
+                'grant_type' => 'client_credentials'
+            ]
+        )->body())->access_token;
+    }
+
+    public function getArtistFromName($name)
+    {
+        debug($name);
+        $client = new Client([
+            'headers' => [
+                'Authorization' => 'Bearer ' . $this->token(),
                 'Accept' => 'application/json'
             ]
         ]);

@@ -56,6 +56,9 @@ Router::scope('/', function (RouteBuilder $routes) {
      */
     $routes->connect('/pages/*', ['controller' => 'Pages', 'action' => 'display']);
 
+    $routes->connect('/spotify/search/:name', ['controller' => 'Artists', 'action' => 'search']);
+    $routes->connect('/spotify/token', ['controller' => 'Artists', 'action' => 'token']);
+
     /**
      * Connect catchall routes for all controllers.
      *
