@@ -19,6 +19,8 @@ use App\Controller\Component\EventfulComponent;
 use App\Controller\Component\GoogleMapsComponent;
 use App\Controller\Component\SpotifyComponent;
 use Cake\Event\Event;
+use Cake\Network\Exception\NotFoundException;
+use Cake\Utility\Hash;
 
 /**
  * @property bool|SpotifyComponent Spotify
@@ -69,7 +71,6 @@ class EventsController extends AppController
     public function around(){
         $address = $this->request->getParam('address');
         $result = json_decode(json_encode($this->Eventful->around($address)->events));
-        //debug($result);
         $events = [];
         foreach ($result->event as $event){
             $latitude = $event->latitude;
@@ -82,7 +83,8 @@ class EventsController extends AppController
                 'place' => $event->venue_name
             ];
         }
-        debug($events);
+        $this->set(compact('events'));
+        $this->set('_serialize', ['events']);
     }
 
 
@@ -156,26 +158,50 @@ class EventsController extends AppController
         $result = json_decode(json_encode($this->Eventful->data($id)));
         debug($result);
     }
+
+    /**
+     * @api {GET} /events/:id/music Get music event
+     * @apiName GetEventMusic
+     * @apiGroup Events
+     *
+     * @apiParam {Number} id     event id
+     *
+     * @apiExample {curl} Example usage:
+     *     curl -i /events/1/music
+     *
+     * @apiSuccess {Url} url url of previw
+     *
+     * @apiSuccessExample Success-Response:
+     *     HTTP/1.1 200 OK
+     *     {
+     *        "url":"http://spotify.com/preview/swag"
+     *     }
+     *
+     * @apiUse EventNotFound
+     */
+    public function music(){
+        //faire artists list
+
+        $artists =['eminem', 'muse', 'queen'];
+        $onePreviewPerArtistMax = [];
+        foreach ($artists as $artist){
+            $id = $this->Spotify->getArtistByName($artist)->id;
+            $previews = Hash::filter(Hash::extract($this->Spotify->getTopTracksById($id), '{n}.preview_url'));
+            shuffle($previews);
+            if(!empty($previews)){
+                $onePreviewPerArtistMax[] = $previews[0];
+            }
+        }
+        if(!empty($onePreviewPerArtistMax)){
+            shuffle($onePreviewPerArtistMax);
+            $url = $onePreviewPerArtistMax[0];
+            $this->set(compact('url'));
+            $this->set('_serialize', ['url']);
+        }else{
+            throw new NotFoundException('Preview not found');
+        }
+    }
 }
 
 
-/**
- * @api {GET} /events/:id/music Get music event
- * @apiName GetEventMusic
- * @apiGroup Events
- *
- * @apiParam {Number} id     event id
- *
- * @apiExample {curl} Example usage:
- *     curl -i /events/1/music
- *
- * @apiSuccess {Url} url url of previw
- *
- * @apiSuccessExample Success-Response:
- *     HTTP/1.1 200 OK
- *     {
- *        "url":"http://spotify.com/preview/swag"
- *     }
- *
- * @apiUse EventNotFound
- */
+

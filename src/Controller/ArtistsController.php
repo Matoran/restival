@@ -15,14 +15,18 @@ namespace App\Controller;
 
 use App\Controller\Component\BandsInTownComponent;
 use App\Controller\Component\EventfulComponent;
+use App\Controller\Component\MusicBrainzComponent;
 use App\Controller\Component\SpotifyComponent;
 use Cake\Event\Event;
+use Cake\Network\Exception\NotFoundException;
+use Cake\Utility\Hash;
 
 
 /**
  * @property bool|SpotifyComponent Spotify
  * @property bool|EventfulComponent Eventful
  * @property bool|BandsInTownComponent BandsInTown
+ * @property bool|MusicBrainzComponent MusicBrainz
  */
 class ArtistsController extends AppController
 {
@@ -37,12 +41,12 @@ class ArtistsController extends AppController
      * @apiExample {curl} Example usage:
      *     curl -i /artists/muse/id
      *
-     * @apiSuccess {Number} id artist id
+     * @apiSuccess {String} id artist id
      *
      * @apiSuccessExample Success-Response:
      *     HTTP/1.1 200 OK
      *     {
-     *        "id":1
+     *        "id":"12Chz98pHFMPJEknJQMWvI"
      *     }
      *
      * @apiUse ArtistNotFound
@@ -63,7 +67,7 @@ class ArtistsController extends AppController
      * @apiParam {Number} id          artist id
      *
      * @apiExample {curl} Example usage:
-     *     curl -i /artists/1/events
+     *     curl -i /artists/12Chz98pHFMPJEknJQMWvI/events
      *
      * @apiSuccess {Object[]} events List of events
      * @apiSuccess {Number} events.id event id
@@ -73,15 +77,28 @@ class ArtistsController extends AppController
      *
      * @apiSuccessExample Success-Response:
      *     HTTP/1.1 200 OK
+     *
      *     {
-     *        "events":[
-     *           {
-     *              "id":1
-     *              "name":"Balelec",
-     *              "date":"2018-12-12",
-     *              "address":"EPFL"
-     *           }
-     *        ]
+     *         "events": [
+     *             {
+     *                 "id": "20150946",
+     *                 "name": "The Forum",
+     *                 "date": "2017-12-09T19:00:00",
+     *                 "address": "The Forum, Inglewood, CA, United States"
+     *             },
+     *             {
+     *                 "id": "19392364",
+     *                 "name": "Qudos Bank Arena",
+     *                 "date": "2017-12-16T20:00:00",
+     *                 "address": "Qudos Bank Arena, Sydney Olympic Park, 02, Australia"
+     *             },
+     *             {
+     *                 "id": "19392366",
+     *                 "name": "Rod Laver Arena",
+     *                 "date": "2017-12-18T20:00:00",
+     *                 "address": "Rod Laver Arena, Melbourne, Vic, Australia"
+     *             }
+     *         ]
      *     }
      *
      * @apiUse ArtistNotFound
@@ -89,7 +106,6 @@ class ArtistsController extends AppController
     public function events()
     {
         $id = $this->request->getParam('id');
-
         $name = $this->Spotify->getArtistById($id)->name;
         $result = $this->BandsInTown->getEventsByArtist($name);
         $events = [];
@@ -101,7 +117,6 @@ class ArtistsController extends AppController
                 'address' => $event->venue->name . ', ' . $event->venue->city . ', ' . $event->venue->region . ', ' . $event->venue->country
                 ];
         }
-        debug($events);
         $this->set(compact('events'));
         $this->set('_serialize', ['events']);
     }
@@ -114,14 +129,14 @@ class ArtistsController extends AppController
      * @apiParam {Number} id     artist id
      *
      * @apiExample {curl} Example usage:
-     *     curl -i /artists/1/music
+     *     curl -i /artists/43ZHCT0cAZBISjO8DG9PnE/music
      *
      * @apiSuccess {Url} url url preview
      *
      * @apiSuccessExample Success-Response:
      *     HTTP/1.1 200 OK
      *     {
-     *        "url":"http://spotify.com/preview/muse/aweqw"
+     *        "url":"https://p.scdn.co/mp3-preview/29990f669b5328b6c40320596a2b14d8660cdb54?cid=919405e7e15a4ecd9d4e4e55c178ce91"
      *     }
      *
      * @apiUse ArtistNotFound
@@ -135,6 +150,15 @@ class ArtistsController extends AppController
     public function music()
     {
         $id = $this->request->getParam('id');
+        $previews = Hash::filter(Hash::extract($this->Spotify->getTopTracksById($id), '{n}.preview_url'));
+        shuffle($previews);
+        if(!empty($previews)){
+            $url = $previews[0];
+            $this->set(compact('url'));
+            $this->set('_serialize', ['url']);
+        }else{
+            throw new NotFoundException('Preview not found');
+        }
     }
 
 
@@ -179,6 +203,16 @@ class ArtistsController extends AppController
      */
     public function data(){
         $id = $this->request->getParam('id');
+        $artist = $this->Spotify->getArtistById($id);
+        $informations = [
+            'name' => $artist->name,
+            'picture' => $artist->images[0]->url,
+            'socialNetworks' => [
+                'spotify' => $artist->external_urls->spotify
+            ]
+        ];
+        $this->set(compact('informations'));
+        $this->set('_serialize', ['informations']);
     }
 
 }

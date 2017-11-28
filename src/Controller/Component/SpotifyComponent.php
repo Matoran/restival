@@ -10,6 +10,7 @@ namespace App\Controller\Component;
 
 use Cake\Controller\Component;
 use Cake\Http\Client;
+use Cake\Network\Exception\NotFoundException;
 
 class SpotifyComponent extends Component
 {
@@ -54,13 +55,18 @@ class SpotifyComponent extends Component
                 'Accept' => 'application/json'
             ]
         ]);
-        return json_decode($client->get(
+        $results = json_decode($client->get(
             $this->base . '/v1/search',
             [
                 'q' => $name,
                 'type' => 'artist'
             ]
-        )->body())->artists->items[0];
+        )->body())->artists;
+        if(empty($results->items)){
+            throw new NotFoundException('Artist not found');
+        }else{
+            return $results->items[0];
+        }
     }
 
     public function getArtistById($id)
@@ -74,6 +80,23 @@ class SpotifyComponent extends Component
         return json_decode($client->get(
             $this->base . '/v1/artists/' . $id
         )->body());
+    }
+
+    public function getTopTracksById($id)
+    {
+        $client = new Client([
+            'headers' => [
+                'Authorization' => 'Bearer ' . $this->token(),
+                'Accept' => 'application/json'
+            ]
+        ]);
+        $result = $client->get(
+            $this->base . '/v1/artists/' . $id . '/top-tracks',
+            [
+                'country' => 'CH'
+            ]
+        )->body();
+        return json_decode($result)->tracks;
     }
 
 

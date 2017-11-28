@@ -10,6 +10,7 @@
 composer.lock
 phpunit.xml.dist
 plugins/*
+.idea/*
 
 # OS generated files #
 ######################

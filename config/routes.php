@@ -47,11 +47,11 @@ Router::defaultRouteClass(DashedRoute::class);
 Router::scope('/', function (RouteBuilder $routes) {
     $routes->get('/artists/:name/id', ['controller' => 'artists', 'action' => 'id']);
     $routes->get('/artists/:id/events', ['controller' => 'artists', 'action' => 'events']);
-    $routes->get('/artists/:id/music', ['controller' => 'artists', 'action' => 'id']);
+    $routes->get('/artists/:id/music', ['controller' => 'artists', 'action' => 'music']);
     $routes->get('/artists/:id/data', ['controller' => 'artists', 'action' => 'data']);
     $routes->get('/events/around/:address', ['controller' => 'events', 'action' => 'around']);
     $routes->get('/events/:id/data', ['controller' => 'events', 'action' => 'data']);
-    $routes->get('/events/:id/music', ['controller' => 'events', 'action' => 'events']);
+    $routes->get('/events/:id/music', ['controller' => 'events', 'action' => 'music']);
 });
 
 /**
