@@ -30,6 +30,23 @@ class EventfulComponent extends Component
                 'location' => $address,
                 'category' => 'music',
                 'date' => 'Future',
+                'page_size' => 250,
+                'sort_order' => 'date'
+            ]
+        )->body());
+    }
+
+    public function data($id){
+        $client = new Client([
+            'headers' => [
+                'Accept' => 'application/json'
+            ]
+        ]);
+        return simplexml_load_string($client->get(
+            $this->base . '/events/get',
+            [
+                'app_key' => $this->key,
+                'id' => $id
             ]
         )->body());
     }

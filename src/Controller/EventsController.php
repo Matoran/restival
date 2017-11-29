@@ -70,18 +70,27 @@ class EventsController extends AppController
      */
     public function around(){
         $address = $this->request->getParam('address');
-        $result = json_decode(json_encode($this->Eventful->around($address)->events));
+        $xml = $this->Eventful->around($address)->events;
+        $result = json_decode(json_encode($xml), true);
         $events = [];
-        foreach ($result->event as $event){
-            $latitude = $event->latitude;
-            $longitude = $event->longitude;
-            $events[] = [
-                'id' =>  $event->venue_id,
-                'name' => $event->title,
-                'date' => $event->start_time,
-                'address' => $this->GoogleMaps->latLngToAddress($latitude, $longitude)->results[0]->formatted_address,
-                'place' => $event->venue_name
-            ];
+        foreach ($result['event'] as $id => $event){
+            //debug($event);
+            if(!empty($event['performers'])) {
+                if (empty($event['venue_address'])) {
+                    $latitude = $event['latitude'];
+                    $longitude = $event['longitude'];
+                    $address = $this->GoogleMaps->latLngToAddress($latitude, $longitude)->results[0]->formatted_address;
+                } else {
+                    $address = $event['venue_address'];
+                }
+                $events[] = [
+                    'id' => (string)$xml->event[$id]->attributes()['id'],
+                    'name' => $event['title'],
+                    'date' => $event['start_time'],
+                    'address' => $address,
+                    'place' => $event['venue_name']
+                ];
+            }
         }
         $this->set(compact('events'));
         $this->set('_serialize', ['events']);
@@ -155,8 +164,24 @@ class EventsController extends AppController
     public function data()
     {
         $id = $this->request->getParam('id');
-        $result = json_decode(json_encode($this->Eventful->data($id)));
-        debug($result);
+        $xml = $this->Eventful->data($id);
+        $result = json_decode(json_encode($xml), true);
+        $data = [];
+        //debug($result);
+        foreach ($result['performers'] as $id => $performer){
+            $name = $performer['name'];
+            $id = $this->Spotify->getArtistByName($name)->id;
+            $artist = $this->Spotify->getArtistById($id);
+            $data[] = [
+                'name' => $artist->name,
+                'picture' => $artist->images[0]->url,
+                'socialNetworks' => [
+                    'spotify' => $artist->external_urls->spotify
+                ]
+            ];
+        }
+        $this->set(compact('data'));
+        $this->set('_serialize', ['data']);
     }
 
     /**
@@ -180,9 +205,15 @@ class EventsController extends AppController
      * @apiUse EventNotFound
      */
     public function music(){
-        //faire artists list
+        $id = $this->request->getParam('id');
+        $xml = $this->Eventful->data($id);
+        $result = json_decode(json_encode($xml), true);
+        $artists = [];
+        //debug($result);
+        foreach ($result['performers'] as $id => $performer){
+            $artists[] = $performer['name'];
 
-        $artists =['eminem', 'muse', 'queen'];
+        }
         $onePreviewPerArtistMax = [];
         foreach ($artists as $artist){
             $id = $this->Spotify->getArtistByName($artist)->id;
