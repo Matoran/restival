@@ -105,8 +105,8 @@ class ArtistsController extends AppController
      */
     public function events()
     {
-        $id = $this->request->getParam('id');
-        $name = $this->Spotify->getArtistById($id)->name;
+        $name = $this->request->getParam('name');
+        $name = $this->Spotify->getArtistByName($name)->name;
         $result = $this->BandsInTown->getEventsByArtist($name);
         $events = [];
         foreach ($result as $event){
@@ -149,7 +149,8 @@ class ArtistsController extends AppController
      */
     public function music()
     {
-        $id = $this->request->getParam('id');
+        $name = $this->request->getParam('name');
+        $id = $this->Spotify->getArtistByName($name)->id;
         $previews = Hash::filter(Hash::extract($this->Spotify->getTopTracksById($id), '{n}.preview_url'));
         shuffle($previews);
         if(!empty($previews)){
@@ -202,17 +203,15 @@ class ArtistsController extends AppController
      * @apiUse ArtistNotFound
      */
     public function data(){
-        $id = $this->request->getParam('id');
-        $artist = $this->Spotify->getArtistById($id);
-        $informations = [
-            'name' => $artist->name,
-            'picture' => $artist->images[0]->url,
-            'socialNetworks' => [
+        $name = $this->request->getParam('name');
+        $artist = $this->Spotify->getArtistByName($name);
+        $name =  $artist->name;
+        $picture = $artist->images[0]->url;
+        $socialNetworks = [
                 'spotify' => $artist->external_urls->spotify
-            ]
         ];
-        $this->set(compact('informations'));
-        $this->set('_serialize', ['informations']);
+        $this->set(compact('name', 'picture', 'socialNetworks'));
+        $this->set('_serialize', ['name', 'picture', 'socialNetworks']);
     }
 
 }

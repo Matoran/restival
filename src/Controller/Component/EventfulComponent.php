@@ -17,23 +17,25 @@ class EventfulComponent extends Component
     private $base = 'http://api.eventful.com/rest';
     private $key = '686MVP7ZrCfbMMHc';
 
-    public function around($address){
+    public function around($lat, $lng, $radius){
         $client = new Client([
             'headers' => [
                 'Accept' => 'application/json'
             ]
         ]);
-        return simplexml_load_string($client->get(
+        $result = $client->get(
             $this->base . '/events/search',
             [
                 'app_key' => $this->key,
-                'location' => $address,
+                'location' => $lat . ',' . $lng,
+                'within' => $radius,
                 'category' => 'music',
                 'date' => 'Future',
                 'page_size' => 250,
                 'sort_order' => 'date'
             ]
-        )->body());
+        );
+        return simplexml_load_string($result->body());
     }
 
     public function data($id){

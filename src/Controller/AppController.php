@@ -51,7 +51,8 @@ class AppController extends Controller
 
     public function beforeRender(Event $event)
     {
-        //$this->RequestHandler->renderAs($this, 'json');
+        $this->response->cors($this->request, '*');
+        $this->RequestHandler->renderAs($this, 'json');
         $this->response->withType('application/json');
     }
 }

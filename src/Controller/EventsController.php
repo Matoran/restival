@@ -70,7 +70,8 @@ class EventsController extends AppController
      */
     public function around(){
         $address = $this->request->getParam('address');
-        $xml = $this->Eventful->around($address)->events;
+        $latLng = $this->GoogleMaps->getLatLngFromAddress($address);
+        $xml = $this->Eventful->around($latLng['location']->lat, $latLng['location']->lng, $latLng['radius'])->events;
         $result = json_decode(json_encode($xml), true);
         $events = [];
         foreach ($result['event'] as $id => $event){
