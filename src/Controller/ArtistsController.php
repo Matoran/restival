@@ -109,13 +109,17 @@ class ArtistsController extends AppController
         $name = $this->Spotify->getArtistByName($name)->name;
         $result = $this->BandsInTown->getEventsByArtist($name);
         $events = [];
+        //debug($result);
         foreach ($result as $event){
             $events[] = [
                 'id' => $event->id,
                 'name' => $event->venue->name,
                 'date' => $event->datetime,
-                'address' => $event->venue->name . ', ' . $event->venue->city . ', ' . $event->venue->region . ', ' . $event->venue->country
-                ];
+                'address' => $event->venue->name . ', ' . $event->venue->city . ', ' . $event->venue->region . ', ' . $event->venue->country,
+                'latitude' => $event->venue->latitude,
+                'longitude' => $event->venue->longitude,
+
+            ];
         }
         $this->set(compact('events'));
         $this->set('_serialize', ['events']);
