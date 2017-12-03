@@ -75,7 +75,7 @@
     </style>
 </head>
 <body>
-<div class="demo-layout mdl-layout mdl-js-layout mdl-layout--fixed-drawer mdl-layout--fixed-header">
+<div class="demo-layout mdl-layout mdl-js-layout">
     <header class="demo-header mdl-layout__header mdl-color--grey-100 mdl-color-text--grey-600">
         <div class="mdl-layout__header-row">
             <span class="mdl-layout-title">Home</span>
@@ -94,7 +94,7 @@
                 </label>
                 <div class="mdl-textfield__expandable-holder">
                     <form>
-                    <input class="mdl-textfield__input" type="text" id="search">
+                        <input class="mdl-textfield__input" type="text" id="search">
                     </form>
                     <label class="mdl-textfield__label" for="search">Enter your query...</label>
 
@@ -102,86 +102,166 @@
             </div>
         </div>
     </header>
-    <div class="demo-drawer mdl-layout__drawer mdl-color--blue-grey-900 mdl-color-text--blue-grey-50">
-        <header class="demo-drawer-header">
-            <img src="images/user.jpg" class="demo-avatar">
-            <div class="demo-avatar-dropdown">
-                <span>hello@example.com</span>
-                <div class="mdl-layout-spacer"></div>
-                <button id="accbtn" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon">
-                    <i class="material-icons" role="presentation">arrow_drop_down</i>
-                    <span class="visuallyhidden">Accounts</span>
-                </button>
-                <ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu mdl-js-ripple-effect" for="accbtn">
-                    <li class="mdl-menu__item">hello@example.com</li>
-                    <li class="mdl-menu__item">info@example.com</li>
-                    <li class="mdl-menu__item"><i class="material-icons">add</i>Add another account...</li>
-                </ul>
-            </div>
-        </header>
-        <nav class="demo-navigation mdl-navigation mdl-color--blue-grey-800">
-            <a class="mdl-navigation__link" href=""><i class="mdl-color-text--blue-grey-400 material-icons"
-                                                       role="presentation">home</i>Home</a>
-            <a class="mdl-navigation__link" href=""><i class="mdl-color-text--blue-grey-400 material-icons"
-                                                       role="presentation">inbox</i>Inbox</a>
-            <a class="mdl-navigation__link" href=""><i class="mdl-color-text--blue-grey-400 material-icons"
-                                                       role="presentation">delete</i>Trash</a>
-            <a class="mdl-navigation__link" href=""><i class="mdl-color-text--blue-grey-400 material-icons"
-                                                       role="presentation">report</i>Spam</a>
-            <a class="mdl-navigation__link" href=""><i class="mdl-color-text--blue-grey-400 material-icons"
-                                                       role="presentation">forum</i>Forums</a>
-            <a class="mdl-navigation__link" href=""><i class="mdl-color-text--blue-grey-400 material-icons"
-                                                       role="presentation">flag</i>Updates</a>
-            <a class="mdl-navigation__link" href=""><i class="mdl-color-text--blue-grey-400 material-icons"
-                                                       role="presentation">local_offer</i>Promos</a>
-            <a class="mdl-navigation__link" href=""><i class="mdl-color-text--blue-grey-400 material-icons"
-                                                       role="presentation">shopping_cart</i>Purchases</a>
-            <a class="mdl-navigation__link" href=""><i class="mdl-color-text--blue-grey-400 material-icons"
-                                                       role="presentation">people</i>Social</a>
-            <div class="mdl-layout-spacer"></div>
-            <a class="mdl-navigation__link" href=""><i class="mdl-color-text--blue-grey-400 material-icons"
-                                                       role="presentation">help_outline</i><span class="visuallyhidden">Help</span></a>
-        </nav>
-    </div>
     <main class="mdl-layout__content mdl-color--grey-100">
         <div class="mdl-grid demo-content">
             <div class="demo-charts mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-grid" id="map">
 
             </div>
         </div>
+        <div class="mdl-grid demo-content">
+            <div class="demo-charts mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col" id="events">
+
+            </div>
+        </div>
+        <div class="mdl-grid demo-content">
+            <div class="demo-charts mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col" id="event">
+
+            </div>
+        </div>
+        <div class="mdl-grid demo-content">
+            <div class="demo-charts mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-grid" id="music">
+
+            </div>
+        </div>
     </main>
 </div>
-    <script
+<script
         src="https://code.jquery.com/jquery-3.2.1.min.js"
         integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
         crossorigin="anonymous"></script>
-    <script src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+<script src="https://code.getmdl.io/1.3.0/material.min.js"></script>
 
-    <script>
-        var map;
-        function initMap() {
-            map = new google.maps.Map(document.getElementById('map'), {
-                zoom: 1,
-                center: {lat: -28.024, lng: 140.887}
-            });
+<script>
+    var map;
 
-            }
-    </script>
+    function initMap() {
+        map = new google.maps.Map(document.getElementById('map'), {
+            zoom: 1,
+            center: {lat: -28.024, lng: 140.887}
+        });
+
+
+    }
+</script>
 <script>
     var base = 'http://localhost:8765';
     var locations = [];
     var markerCluster;
     var markers = [];
+    var events = [];
+    var divEvents = $('#events');
+    var divEvent = $('#event');
+    var divMusic = $('#music');
+    var type;
+    var search;
 
 
+    function playMusic(url) {
+        $.ajax({
+            type: 'GET',
+            url: base + url,
+            crossDomain: true
+        })
+            .done(function (music) {
+                divMusic.html('<audio controls autoplay>\n' +
+                    '  <source src="' + music['url'] + '" type="audio/mpeg">\n' +
+                    '  Your browser does not support the audio element.\n' +
+                    '</audio>');
+                console.log(music);
+                console.log("success");
+            })
+            .fail(function () {
+                divMusic.html('no preview sorry');
+                console.log("error");
+            })
+            .always(function () {
+                console.log("complete");
+            });
+    }
 
-    $('form').submit(function( event ) {
+    function showArtistEvent(id){
+        console.log(id);
+        var event = events[id];
+        $.ajax({
+            type: 'GET',
+            url: base + "/artists/" + search + "/data",
+            crossDomain: true
+        })
+            .done(function (data) {
+
+                console.log(data);
+                console.log(event);
+                console.log("success");
+                var content = '';
+                content += '<h1>' + event.name + ' (' + event.date + ')</h1>';
+                content += '<h2>' + event.address + ' (' + event.place + ')</h2>';
+
+                divEvent.html(content);
+            })
+            .fail(function (error) {
+                console.log(error);
+                console.log("error");
+            })
+            .always(function () {
+                console.log("complete");
+            });
+        playMusic("/artists/" + search + "/music");
+    }
+
+    function showEventEvents(id){
+        var event = events[id];
+        $.ajax({
+            type: 'GET',
+            url: base + "/events/" + event.id + "/data",
+            crossDomain: true
+        })
+            .done(function (artists) {
+
+                console.log(artists);
+                console.log("success");
+                artists = artists['artists'];
+                var content = '';
+                content += '<h1>' + event.name + ' (' + event.date + ')</h1>';
+                content += '<h2>' + event.address + ' (' + event.place + ')</h2>';
+                content += '<h3>Line Up</h3>';
+                console.log(artists);
+                artists.forEach(function (artist) {
+                    content += '<ul><li>' + artist.name + '</li></ul>';
+                    console.log(artist.picture);
+                    if(artist.picture != null){
+                        content += '<img src="' + artist.picture + '" width="100%" alt="artist picture">';
+                    }
+                });
+                divEvent.html(content);
+            })
+            .fail(function (error) {
+                console.log(error);
+                console.log("error");
+            })
+            .always(function () {
+                console.log("complete");
+            });
+        playMusic("/events/" + event.id + "/music");
+    }
+
+    function showEvent(id) {
+        if(type === 'address'){
+            showEventEvents(id);
+        }else{
+            showArtistEvent(id);
+        }
+    }
+
+
+    $('form').submit(function (event) {
         event.preventDefault();
-        var search = $('#search').val();
-        var type = $('input[name=options]:checked').val();
+        search = $('#search').val();
+        type = $('input[name=options]:checked').val();
         var url;
-        if(type === "artist"){
-            url = "/artists/" + search + "/events"
+        if (type === "artist") {
+            url = "/artists/" + search + "/events";
+        } else if (type === "address") {
+            url = "/events/around/" + search;
         }
         console.log(base + url);
         $.ajax({
@@ -189,49 +269,67 @@
             url: base + url,
             crossDomain: true
         })
-            .done(function(data) {
+            .done(function (data) {
                 var names = [];
                 locations = [];
-                data['events'].forEach(function(event){
+                events = data['events'];
+                events.forEach(function (event) {
                     console.log(event);
-                    myLatlng = new google.maps.LatLng(event.latitude,event.longitude);
+                    myLatlng = new google.maps.LatLng(event.latitude, event.longitude);
                     names.push(event.name);
                     locations.push(myLatlng);
-
                 });
 
-                markers.forEach(function(marker){
+                markers.forEach(function (marker) {
                     marker.setMap(null);
                 });
                 markers = locations.map(function (location, i) {
-                    return new google.maps.Marker({
+                    var marker = new google.maps.Marker({
                         position: location,
-                        title: names[i]
+                        title: names[i],
+                        event: events[i],
+                        id: i
                     });
+                    google.maps.event.addListener(marker, 'click', function (evt) {
+                        showEvent(i);
+                        divEvents.hide();
+                    });
+                    return marker;
                 });
 
-                if(markerCluster != null){
+                if (markerCluster != null) {
                     markerCluster.clearMarkers();
                 }
                 // Add a marker clusterer to manage the markers.
                 markerCluster = new MarkerClusterer(map, markers,
                     {imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'});
-
-                console.log( "success" );
+                // now add a click listerner for markerCluster
+                google.maps.event.addListener(markerCluster, 'clusterclick', function (evt) {
+                    if (map.getZoom() > 10) {
+                        var content = '';
+                        evt.markers_.forEach(function (event){
+                            console.log(event);
+                            content += '<a href="#" onclick="showEvent('+ event.id + ')">' + event.title + '</a><br/>';
+                        });
+                        divEvents.html(content);
+                        divEvents.show();
+                    }
+                });
+                console.log("success");
             })
-            .fail(function() {
-                console.log( "error" );
+            .fail(function () {
+                console.log("error");
             })
-            .always(function() {
-                console.log( "complete" );
+            .always(function () {
+                console.log("complete");
             });
 
     });
 </script>
-    <script src="https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js">
-    </script>
-    <script async defer
-            src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBQMq8nZUzQIL5mWmk7Rx2nqpiYpgmojSY&callback=initMap">
-    </script>
+<script src="https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js">
+</script>
+<script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBQMq8nZUzQIL5mWmk7Rx2nqpiYpgmojSY&callback=initMap">
+</script>
 </body>
 </html>

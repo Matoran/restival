@@ -106,20 +106,25 @@ class ArtistsController extends AppController
     public function events()
     {
         $name = $this->request->getParam('name');
-        $name = $this->Spotify->getArtistByName($name)->name;
+        $result = $this->Spotify->getArtistByName($name, false);
+        if(!empty($result)){
+            $name = $result->name;
+        }
         $result = $this->BandsInTown->getEventsByArtist($name);
         $events = [];
-        //debug($result);
-        foreach ($result as $event){
-            $events[] = [
-                'id' => $event->id,
-                'name' => $event->venue->name,
-                'date' => $event->datetime,
-                'address' => $event->venue->name . ', ' . $event->venue->city . ', ' . $event->venue->region . ', ' . $event->venue->country,
-                'latitude' => $event->venue->latitude,
-                'longitude' => $event->venue->longitude,
+        if(!isset($result->errors)){
+            foreach ($result as $event){
+                $events[] = [
+                    'id' => $event->id,
+                    'name' => $event->venue->name,
+                    'date' => $event->datetime,
+                    'address' => $event->venue->name . ', ' . $event->venue->city . ', ' . $event->venue->region . ', ' . $event->venue->country,
+                    'place' => $event->venue->name,
+                    'latitude' => $event->venue->latitude,
+                    'longitude' => $event->venue->longitude,
 
-            ];
+                ];
+            }
         }
         $this->set(compact('events'));
         $this->set('_serialize', ['events']);

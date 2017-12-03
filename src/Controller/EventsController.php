@@ -89,7 +89,9 @@ class EventsController extends AppController
                     'name' => $event['title'],
                     'date' => $event['start_time'],
                     'address' => $address,
-                    'place' => $event['venue_name']
+                    'place' => $event['venue_name'],
+                    'latitude' => $event['latitude'],
+                    'longitude' => $event['longitude']
                 ];
             }
         }
@@ -167,22 +169,31 @@ class EventsController extends AppController
         $id = $this->request->getParam('id');
         $xml = $this->Eventful->data($id);
         $result = json_decode(json_encode($xml), true);
-        $data = [];
-        //debug($result);
-        foreach ($result['performers'] as $id => $performer){
+        $artists = [];
+        $perfomers = isset($result['performers']['performer'][0]) ? $result['performers']['performer'] : $result['performers'];
+        foreach ($perfomers as $id => $performer){
             $name = $performer['name'];
-            $id = $this->Spotify->getArtistByName($name)->id;
-            $artist = $this->Spotify->getArtistById($id);
-            $data[] = [
-                'name' => $artist->name,
-                'picture' => $artist->images[0]->url,
-                'socialNetworks' => [
-                    'spotify' => $artist->external_urls->spotify
-                ]
-            ];
+            $result = $this->Spotify->getArtistByName($name, false);
+            if(!empty($result)){
+                $id = $result->id;
+                $artist = $this->Spotify->getArtistById($id);
+                $artistTemp = [
+                    'name' => $artist->name,
+                    'socialNetworks' => [
+                        'spotify' => $artist->external_urls->spotify
+                    ]
+                ];
+                if(isset($artist->images[0])){
+                    $artistTemp['picture'] = $artist->images[0]->url;
+                }
+                $artists[] = $artistTemp;
+            }else{
+                $artists[]['name'] = $name;
+            }
+
         }
-        $this->set(compact('data'));
-        $this->set('_serialize', ['data']);
+        $this->set(compact('artists'));
+        $this->set('_serialize', ['artists']);
     }
 
     /**
@@ -209,19 +220,17 @@ class EventsController extends AppController
         $id = $this->request->getParam('id');
         $xml = $this->Eventful->data($id);
         $result = json_decode(json_encode($xml), true);
-        $artists = [];
-        //debug($result);
-        foreach ($result['performers'] as $id => $performer){
-            $artists[] = $performer['name'];
-
-        }
+        $perfomers = isset($result['performers']['performer'][0]) ? $result['performers']['performer'] : $result['performers'];
         $onePreviewPerArtistMax = [];
-        foreach ($artists as $artist){
-            $id = $this->Spotify->getArtistByName($artist)->id;
-            $previews = Hash::filter(Hash::extract($this->Spotify->getTopTracksById($id), '{n}.preview_url'));
-            shuffle($previews);
-            if(!empty($previews)){
-                $onePreviewPerArtistMax[] = $previews[0];
+        foreach ($perfomers as $id => $performer){
+            $result = $this->Spotify->getArtistByName($performer['name'], false);
+            if(!empty($result)) {
+                $id = $result->id;
+                $previews = Hash::filter(Hash::extract($this->Spotify->getTopTracksById($id), '{n}.preview_url'));
+                shuffle($previews);
+                if (!empty($previews)) {
+                    $onePreviewPerArtistMax[] = $previews[0];
+                }
             }
         }
         if(!empty($onePreviewPerArtistMax)){

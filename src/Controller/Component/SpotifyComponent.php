@@ -47,7 +47,7 @@ class SpotifyComponent extends Component
         )->body())->access_token;
     }
 
-    public function getArtistByName($name)
+    public function getArtistByName($name, $throwError = true)
     {
         $client = new Client([
             'headers' => [
@@ -62,10 +62,18 @@ class SpotifyComponent extends Component
                 'type' => 'artist'
             ]
         )->body())->artists;
-        if(empty($results->items)){
-            throw new NotFoundException('Artist not found');
+        if($throwError){
+            if(empty($results->items)){
+                throw new NotFoundException('Artist not found');
+            }else{
+                return $results->items[0];
+            }
         }else{
-            return $results->items[0];
+            if(empty($results->items)){
+                return null;
+            }else{
+                return $results->items[0];
+            }
         }
     }
 
