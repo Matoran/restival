@@ -21,13 +21,14 @@ class EventfulComponent extends Component
     public function around($lat, $lng, $radius){
         $file = new File('tmp/eventful/' . $lat . $lng .$radius);
         if($file->exists()){
-            return simplexml_load_string($file->read());
+            return json_decode($file->read());
         }
         $client = new Client([
             'headers' => [
                 'Accept' => 'application/json'
             ]
         ]);
+
         $result = $client->get(
             $this->base . '/events/search',
             [
@@ -39,11 +40,12 @@ class EventfulComponent extends Component
                 'page_size' => 250,
                 'sort_order' => 'date'
             ]
-        );
+        )->body();
         $file = new File('tmp/eventful/' . $lat . $lng .$radius, true);
-        $file->write($result->body());
+        $result = json_encode(simplexml_load_string($result));
+        $file->write($result);
         $file->close();
-        return simplexml_load_string($result->body());
+        return json_decode($result);
     }
 
     public function data($id){

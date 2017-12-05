@@ -71,27 +71,25 @@ class EventsController extends AppController
     public function around(){
         $address = $this->request->getParam('address');
         $latLng = $this->GoogleMaps->getLatLngFromAddress($address);
-        $xml = $this->Eventful->around($latLng['location']->lat, $latLng['location']->lng, $latLng['radius'])->events;
-        $result = json_decode(json_encode($xml), true);
+        $data = $this->Eventful->around($latLng['location']->lat, $latLng['location']->lng, $latLng['radius'])->events;
         $events = [];
-        foreach ($result['event'] as $id => $event){
-            //debug($event);
-            if(!empty($event['performers'])) {
-                if (empty($event['venue_address'])) {
-                    $latitude = $event['latitude'];
-                    $longitude = $event['longitude'];
+        foreach ($data->event as $id => $event){
+            if(!empty($event->performers)) {
+                if (empty($event->venue_address)) {
+                    $latitude = $event->latitude;
+                    $longitude = $event->longitude;
                     $address = $this->GoogleMaps->latLngToAddress($latitude, $longitude)->results[0]->formatted_address;
                 } else {
-                    $address = $event['venue_address'];
+                    $address = $event->venue_address;
                 }
                 $events[] = [
-                    'id' => (string)$xml->event[$id]->attributes()['id'],
-                    'name' => $event['title'],
-                    'date' => $event['start_time'],
+                    'id' => (string)$event->{'@attributes'}->id,
+                    'name' => $event->title,
+                    'date' => $event->start_time,
                     'address' => $address,
-                    'place' => $event['venue_name'],
-                    'latitude' => $event['latitude'],
-                    'longitude' => $event['longitude']
+                    'place' => $event->venue_name,
+                    'latitude' => $event->latitude,
+                    'longitude' => $event->longitude
                 ];
             }
         }
