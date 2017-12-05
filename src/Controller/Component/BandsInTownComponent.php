@@ -9,6 +9,7 @@ namespace App\Controller\Component;
 
 
 use Cake\Controller\Component;
+use Cake\Filesystem\File;
 use Cake\Http\Client;
 
 class BandsInTownComponent extends Component
@@ -17,17 +18,25 @@ class BandsInTownComponent extends Component
 
     public function getEventsByArtist($name)
     {
+        $file = new File('tmp/bandsintown/' . $name);
+        if($file->exists()){
+            return json_decode($file->read());
+        }
         $client = new Client([
                 'headers' => [
                     'Accept' => 'application/json'
                 ]
             ]);
-        return json_decode($client->get(
+        $data = $client->get(
             $this->base . '/artists/' . $name . '/events',
             [
                 'app_id' => 'Restival',
             ]
-        )->body());
+        )->body();
+        $file = new File('tmp/bandsintown/' . $name, true);
+        $file->write($data);
+        $file->close();
+        return json_decode($data);
     }
 
 }

@@ -30,7 +30,6 @@ use Cake\Utility\Hash;
  */
 class ArtistsController extends AppController
 {
-
     /**
      * @api {GET} /artists/:name/id Get artist id
      * @apiName GetArtistId
@@ -54,7 +53,8 @@ class ArtistsController extends AppController
     public function id()
     {
         $name = $this->request->getParam('name');
-        $id = $this->Spotify->getArtistByName($name)->id;
+        $artist = $this->Spotify->getArtistByName($name);
+        $id = $artist->id;
         $this->set(compact('id'));
         $this->set('_serialize', ['id']);
     }

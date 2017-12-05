@@ -272,12 +272,16 @@
             .done(function (data) {
                 var names = [];
                 locations = [];
+                var bounds = new google.maps.LatLngBounds();
                 events = data['events'];
                 events.forEach(function (event) {
                     console.log(event);
                     myLatlng = new google.maps.LatLng(event.latitude, event.longitude);
                     names.push(event.name);
                     locations.push(myLatlng);
+                    bounds.extend(myLatlng);
+                    console.log(bounds);
+                    map.fitBounds(bounds);
                 });
 
                 markers.forEach(function (marker) {

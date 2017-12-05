@@ -9,6 +9,7 @@ namespace App\Controller\Component;
 
 
 use Cake\Controller\Component;
+use Cake\Filesystem\File;
 use Cake\Http\Client;
 
 class EventfulComponent extends Component
@@ -18,6 +19,10 @@ class EventfulComponent extends Component
     private $key = '686MVP7ZrCfbMMHc';
 
     public function around($lat, $lng, $radius){
+        $file = new File('tmp/eventful/' . $lat . $lng .$radius);
+        if($file->exists()){
+            return simplexml_load_string($file->read());
+        }
         $client = new Client([
             'headers' => [
                 'Accept' => 'application/json'
@@ -35,22 +40,35 @@ class EventfulComponent extends Component
                 'sort_order' => 'date'
             ]
         );
+        $file = new File('tmp/eventful/' . $lat . $lng .$radius, true);
+        $file->write($result->body());
+        $file->close();
         return simplexml_load_string($result->body());
     }
 
     public function data($id){
+        $file = new File('tmp/eventful/' . $id);
+        if($file->exists()){
+            return json_decode($file->read());
+        }
+
         $client = new Client([
             'headers' => [
                 'Accept' => 'application/json'
             ]
         ]);
-        return simplexml_load_string($client->get(
+        $result = $client->get(
             $this->base . '/events/get',
             [
                 'app_key' => $this->key,
                 'id' => $id
             ]
-        )->body());
+        )->body();
+        $file = new File('tmp/eventful/' . $id, true);
+        $result = json_encode(simplexml_load_string($result));
+        $file->write($result);
+        $file->close();
+        return json_decode($result);
     }
 
 

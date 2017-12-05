@@ -9,6 +9,7 @@
 namespace App\Controller\Component;
 
 use Cake\Controller\Component;
+use Cake\Filesystem\File;
 use Cake\Http\Client;
 use Cake\Network\Exception\NotFoundException;
 
@@ -49,6 +50,10 @@ class SpotifyComponent extends Component
 
     public function getArtistByName($name, $throwError = true)
     {
+        $file = new File('tmp/spotify/' . $name);
+        if($file->exists()){
+            return json_decode($file->read());
+        }
         $client = new Client([
             'headers' => [
                 'Authorization' => 'Bearer ' . $this->token(),
@@ -62,19 +67,19 @@ class SpotifyComponent extends Component
                 'type' => 'artist'
             ]
         )->body())->artists;
-        if($throwError){
-            if(empty($results->items)){
+        if (empty($results->items)) {
+            if ($throwError) {
                 throw new NotFoundException('Artist not found');
-            }else{
-                return $results->items[0];
-            }
-        }else{
-            if(empty($results->items)){
+            } else {
                 return null;
-            }else{
-                return $results->items[0];
             }
+        } else {
+            $file = new File('tmp/spotify/' . $name, true);
+            $file->write(json_encode($results->items[0]));
+            $file->close();
+            return $results->items[0];
         }
+
     }
 
     public function getArtistById($id)
@@ -92,6 +97,11 @@ class SpotifyComponent extends Component
 
     public function getTopTracksById($id)
     {
+        $file = new File('tmp/spotify/' . $id);
+        if($file->exists()){
+            return json_decode($file->read())->tracks;
+        }
+
         $client = new Client([
             'headers' => [
                 'Authorization' => 'Bearer ' . $this->token(),
@@ -104,6 +114,11 @@ class SpotifyComponent extends Component
                 'country' => 'CH'
             ]
         )->body();
+
+        $file = new File('tmp/spotify/' . $id, true);
+        $file->write($result);
+        $file->close();
+
         return json_decode($result)->tracks;
     }
 

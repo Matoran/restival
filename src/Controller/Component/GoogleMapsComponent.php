@@ -48,12 +48,11 @@ class GoogleMapsComponent extends Component
         if($result->status == "ZERO_RESULTS"){
             throw new NotFoundException('Address not found');
         }
-
         $geometry = $result->results[0]->geometry;
         $lat1 = deg2rad($geometry->location->lat);
         $lon1 = deg2rad($geometry->location->lng);
-        $lat2 = deg2rad($geometry->bounds->northeast->lat);
-        $lon2 = deg2rad($geometry->bounds->northeast->lng);
+        $lat2 = deg2rad($geometry->viewport->northeast->lat);
+        $lon2 = deg2rad($geometry->viewport->northeast->lng);
 
         $dis = $r * acos(sin($lat1) * sin($lat2) +
                 cos($lat1) * cos($lat2) * cos($lon2 - $lon1));
