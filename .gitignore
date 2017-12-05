@@ -2,9 +2,12 @@
 ##########################
 /config/app.php
 /config/.env
-/tmp/*
+
+/tmp/
+!/tmp/spotify/
+!/tmp/eventful/
+!/tmp/bandsintown/
 /logs/*
-/tmp/*
 /vendor/*
 /tests/*
 composer.lock

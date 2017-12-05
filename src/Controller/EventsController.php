@@ -169,7 +169,7 @@ class EventsController extends AppController
         $id = $this->request->getParam('id');
         $data = $this->Eventful->data($id);
         $artists = [];
-        $perfomers = isset($data->performers->performer[0]) ? $data->performers->performer : $data->performers;
+        $perfomers = is_array($data->performers->performer) ? $data->performers->performer : $data->performers;
         foreach ($perfomers as $id => $performer){
             $name = $performer->name;
             $result = $this->Spotify->getArtistByName($name, false);
@@ -218,7 +218,7 @@ class EventsController extends AppController
     public function music(){
         $id = $this->request->getParam('id');
         $data = $this->Eventful->data($id);
-        $perfomers = isset($data->performers->performer[0]) ? $data->performers->performer : $data->performers;
+        $perfomers = is_array($data->performers->performer) ? $data->performers->performer : $data->performers;
         $onePreviewPerArtistMax = [];
         foreach ($perfomers as $id => $performer){
             $result = $this->Spotify->getArtistByName($performer->name, false);
