@@ -148,29 +148,22 @@
     var divEvents = $('#events');
     var divEvent = $('#event');
     var divMusic = $('#music');
+    var divError = $('#error');
     var type;
     var search;
-    function hideAll(){
+
+    function hideAll() {
         divEvents.hide();
         divEvent.hide();
         divMusic.hide();
     }
     hideAll();
 
-    function showError(error, div){
-        /*hideAll();
-        divEvents.html('');
-        divEvent.html('');
-        divMusic.html('');*/
-        div.html(error);
-        div.show();
-
-    }
-
-    function artistToHtml(artist){
+    function artistToHtml(artist) {
         var content = '<img src="' + artist.picture + '" width="100%" alt="artist picture">';
         content += '<ul>';
-        if(artist.socialNetworks != null){
+        content += '<li>name: ' + artist.name + '</li>';
+        if (artist.socialNetworks != null) {
             content += '<li><a href="' + artist.socialNetworks.spotify + '">Spotify</a></li>';
             content += '<li><a href="' + artist.socialNetworks.facebook + '">Facebook</a></li>';
             content += '<li><a href="' + artist.socialNetworks.bandsintown + '">BandsInTown</a></li>';
@@ -196,54 +189,48 @@
                     '  Your browser does not support the audio element.\n' +
                     '</audio>');
                 console.log(music);
-                console.log("success");
             })
             .fail(function (error) {
                 console.log(error);
-                showError(error.responseJSON.message, divMusic);
-                console.log("error");
-            })
-            .always(function () {
-                console.log("complete");
+                divMusic.html(error.responseJSON.message);
             });
         divMusic.show();
     }
 
-    function showArtistEvent(id){
+    function showArtistEvent(id) {
         console.log(id);
         var event = events[id];
+        console.log(event);
+        var content = '';
+        content += '<h1>' + event.name + ' (' + event.date + ')</h1>';
+        content += '<h2>' + event.address + ' (' + event.place + ')</h2>';
+        divEvent.html(content);
         $.ajax({
             type: 'GET',
             url: base + "/artists/" + search + "/data",
             crossDomain: true
         })
             .done(function (artist) {
-
                 console.log(artist);
-                console.log(event);
-                console.log("success");
-                var content = '';
-                content += '<h1>' + event.name + ' (' + event.date + ')</h1>';
-                content += '<h2>' + event.address + ' (' + event.place + ')</h2>';
-                content += '<ul><li>' + artist.name + '</li></ul>';
                 content += artistToHtml(artist);
                 divEvent.html(content);
-                playMusic("/artists/" + search + "/music");
+
             })
             .fail(function (error) {
-                showError(error.responseJSON.message, divEvent);
+                content += error.responseJSON.message;
+                divEvent.html(content);
                 console.log(error);
-                console.log("error");
-            })
-            .always(function () {
-                console.log("complete");
             });
         divEvent.show();
-
+        playMusic("/artists/" + search + "/music");
     }
 
-    function showEventEvents(id){
+    function showEventEvents(id) {
         var event = events[id];
+        var content = '';
+        content += '<h1>' + event.name + ' (' + event.date + ')</h1>';
+        content += '<h2>' + event.address + ' (' + event.place + ')</h2>';
+        divEvent.html(content);
         $.ajax({
             type: 'GET',
             url: base + "/events/" + event.id + "/data",
@@ -254,9 +241,7 @@
                 console.log(artists);
                 console.log("success");
                 artists = artists['artists'];
-                var content = '';
-                content += '<h1>' + event.name + ' (' + event.date + ')</h1>';
-                content += '<h2>' + event.address + ' (' + event.place + ')</h2>';
+
                 content += '<h3>Line Up</h3>';
                 console.log(artists);
                 artists.forEach(function (artist) {
@@ -265,22 +250,19 @@
                 divEvent.html(content);
             })
             .fail(function (error) {
-
-                showError(error.responseJSON.message, divEvent);
+                content += error.responseJSON.message;
+                divEvent.html(content);
                 console.log(error);
-                console.log("error");
-            })
-            .always(function () {
-                console.log("complete");
             });
         divEvent.show();
         playMusic("/events/" + event.id + "/music");
     }
 
     function showEvent(id) {
-        if(type === 'address'){
+        divError.hide();
+        if (type === 'address') {
             showEventEvents(id);
-        }else{
+        } else {
             showArtistEvent(id);
         }
     }
@@ -345,22 +327,20 @@
                 google.maps.event.addListener(markerCluster, 'clusterclick', function (evt) {
                     if (map.getZoom() > 10) {
                         var content = '';
-                        evt.markers_.forEach(function (event){
+                        evt.markers_.forEach(function (event) {
                             console.log(event);
-                            content += '<a href="#" onclick="showEvent('+ event.id + ')">' + event.title + '</a><br/>';
+                            content += '<a href="#" onclick="showEvent(' + event.id + ')">' + event.title + '</a><br/>';
                         });
                         divEvents.html(content);
                         divEvents.show();
                     }
                 });
-                console.log("success");
             })
             .fail(function (error) {
-                showError(error.responseJSON.message, divEvents);
-                console.log("error");
-            })
-            .always(function () {
-                console.log("complete");
+                divEvents.html(error.responseJSON.message);
+                hideAll();
+                divEvents.show();
+
             });
 
 

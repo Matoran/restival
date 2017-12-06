@@ -17,7 +17,6 @@ use App\Controller\Component\BandsInTownComponent;
 use App\Controller\Component\EventfulComponent;
 use App\Controller\Component\MusicBrainzComponent;
 use App\Controller\Component\SpotifyComponent;
-use Cake\Event\Event;
 use Cake\Network\Exception\NotFoundException;
 use Cake\Utility\Hash;
 
@@ -60,48 +59,56 @@ class ArtistsController extends AppController
     }
 
     /**
-     * @api {GET} /artists/:id/events Get all events from artist
+     * @api {GET} /artists/:name/events Get all events from artist
      * @apiName GetArtistsEvents
      * @apiGroup Artists
      *
-     * @apiParam {Number} id          artist id
+     * @apiParam {Number} name          artist name
      *
      * @apiExample {curl} Example usage:
-     *     curl -i /artists/12Chz98pHFMPJEknJQMWvI/events
+     *     curl -i /artists/Muse/events
      *
      * @apiSuccess {Object[]} events List of events
      * @apiSuccess {Number} events.id event id
      * @apiSuccess {String} events.name event name
      * @apiSuccess {Date} events.date event date
      * @apiSuccess {String} events.address event address
+     * @apiSuccess {Number} events.latitude latitude
+     * @apiSuccess {Number} events.longitude longitude
      *
      * @apiSuccessExample Success-Response:
      *     HTTP/1.1 200 OK
      *
      *     {
-     *         "events": [
+     *         "events":[
      *             {
-     *                 "id": "20150946",
-     *                 "name": "The Forum",
-     *                 "date": "2017-12-09T19:00:00",
-     *                 "address": "The Forum, Inglewood, CA, United States"
+     *                 "id":"20150946",
+     *                 "name":"The Forum",
+     *                 "date":"2017-12-09T19:00:00",
+     *                 "address":"The Forum, Inglewood, CA, United States",
+     *                 "place":"The Forum",
+     *                 "latitude":"33.9583",
+     *                 "longitude":"-118.341868"
      *             },
      *             {
-     *                 "id": "19392364",
-     *                 "name": "Qudos Bank Arena",
-     *                 "date": "2017-12-16T20:00:00",
-     *                 "address": "Qudos Bank Arena, Sydney Olympic Park, 02, Australia"
-     *             },
-     *             {
-     *                 "id": "19392366",
-     *                 "name": "Rod Laver Arena",
-     *                 "date": "2017-12-18T20:00:00",
-     *                 "address": "Rod Laver Arena, Melbourne, Vic, Australia"
+     *                 "id":"19392364",
+     *                 "name":"Qudos Bank Arena",
+     *                 "date":"2017-12-16T20:00:00",
+     *                 "address":"Qudos Bank Arena, Sydney Olympic Park, 02, Australia",
+     *                 "place":"Qudos Bank Arena",
+     *                 "latitude":"-33.8484897",
+     *                 "longitude":"151.0672072"
      *             }
      *         ]
      *     }
      *
      * @apiUse ArtistNotFound
+     *
+     * @apiErrorExample Error-Response:
+     *     HTTP/1.1 404 Not Found
+     *     {
+     *       "error": "EventsNotFound"
+     *     }
      */
     public function events()
     {
@@ -134,14 +141,14 @@ class ArtistsController extends AppController
     }
 
     /**
-     * @api {GET} /artists/:id/music Get random music from artist
+     * @api {GET} /artists/:name/music Get random music from artist
      * @apiName GetArtistMusic
      * @apiGroup Artists
      *
-     * @apiParam {Number} id     artist id
+     * @apiParam {String} name     artist name
      *
      * @apiExample {curl} Example usage:
-     *     curl -i /artists/43ZHCT0cAZBISjO8DG9PnE/music
+     *     curl -i /artists/Muse/music
      *
      * @apiSuccess {Url} url url preview
      *
@@ -176,40 +183,36 @@ class ArtistsController extends AppController
 
 
     /**
-     * @api {GET} /artists/:id/data Get artist data
+     * @api {GET} /artists/:name/data Get artist data
      * @apiName GetArtistData
      * @apiGroup Artists
      *
-     * @apiParam {Number} id     artist id
+     * @apiParam {Number} name     artist name
      *
      * @apiExample {curl} Example usage:
-     *     curl -i /artists/1/data
+     *     curl -i /artists/muse/data
      *
      * @apiSuccess {String} name name of artist
      * @apiSuccess {Url} artists.picture picture of artist
      * @apiSuccess {Object[]} artists.socialNetworks social networks
-     * @apiSuccess {String} artists.socialNetworks.name social network name
-     * @apiSuccess {Url} artists.socialNetworks.url social network url
+     * @apiSuccess {Url} artists.socialNetworks.spotify spotify artist link
+     * @apiSuccess {Url} artists.socialNetworks.bandsintown bandsintown artist link
+     * @apiSuccess {Url} artists.socialNetworks.facebook facebook artist link
      *
      * @apiSuccessExample Success-Response:
      *     HTTP/1.1 200 OK
      *     {
-     *        "name":"Muse",
-     *        "created":"2000-12-12",
-     *        "picture":"http://spotify.com/picture/weqweziu",
-     *        "socialNetworks":[
-     *           {
-     *             "name":"facebook",
-     *             "url":"https://facebook.com/muse"
-     *           },
-     *           {
-     *             "name":"twitter",
-     *             "url":"https://twitter.com/muse"
-     *           },
-     *           {
-     *             "name":"instagram",
-     *             "url":"https://instagram.com/muse"
-     *           }
+     *         "name":"Muse",
+     *         "picture":"https://i.scdn.co/image/19ac88c7aec1f68aa6e207aff29efa15d37336a7",
+     *         "socialNetworks":{
+     *             "spotify":"https://open.spotify.com/artist/12Chz98pHFMPJEknJQMWvI",
+     *             "bandsintown":"https://www.bandsintown.com/a/143?came_from=267&app_id=Restival",
+     *             "facebook":"http://www.facebook.com/muse"
+     *         },
+     *         "country":"GB",
+     *         "lifespan":"1994",
+     *         "type":"Group",
+     *         "disambiguation":"UK rock band"
      *     }
      *
      * @apiUse ArtistNotFound

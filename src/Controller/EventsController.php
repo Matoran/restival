@@ -9,6 +9,15 @@
  *     {
  *       "error": "EventNotFound"
  *     }
+ * @apiDefine PerformersNotFound
+ *
+ * @apiError PerformersNotFound The event has not performers.
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 404 Not Found
+ *     {
+ *       "error": "PerformersNotFound"
+ *     }
  */
 
 namespace App\Controller;
@@ -45,29 +54,49 @@ class EventsController extends AppController
      *     curl -i "/events/around/Suisse"
      *
      * @apiSuccess {Object[]} events List of events
-     * @apiSuccess {Number} events.id event id
+     * @apiSuccess {String} events.id event id
      * @apiSuccess {String} events.name event name
      * @apiSuccess {Date} events.date event date
      * @apiSuccess {String} events.address event address
+     * @apiSuccess {String} events.place event place
+     * @apiSuccess {Number} events.latitude latitude
+     * @apiSuccess {Number} events.longitude longitude
      *
      * @apiSuccessExample Success-Response:
      *     HTTP/1.1 200 OK
      *     {
-     *        "events":[
-     *           {
-     *              "id":1
-     *              "name":"Balelec",
-     *              "date":"2018-12-12",
-     *              "address":"Route Cantonale, 1015 Lausanne"
-     *              "place":"EPFL"
-     *           }
-     *        ]
+     *         "events":[
+     *             {
+     *                 "id":"E0-001-103559243-1",
+     *                 "name":"Estas Tonne",
+     *                 "date":"2017-12-06 00:00:00",
+     *                 "address":"3 Rue du Stand",
+     *                 "place":"Palladium",
+     *                 "latitude":"46.2032478",
+     *                 "longitude":"6.1348724"
+     *             },
+     *             {
+     *                 "id":"E0-001-106772309-6",
+     *                 "name":"Tess (Chat Noir)",
+     *                 "date":"2017-12-08 21:00:00",
+     *                 "address":"13, rue Vautier",
+     *                 "place":"Chat Noir",
+     *                 "latitude":"46.1850382",
+     *                 "longitude":"6.1424173"
+     *             }
+     *         ]
      *     }
      *
      * @apiErrorExample Error-Response:
      *     HTTP/1.1 404 Not Found
      *     {
      *       "error": "AddressNotFound"
+     *     }
+     *
+     * @apiErrorExample Error-Response:
+     *     HTTP/1.1 404 Not Found
+     *     {
+     *       "error": "EventsNotFound"
      *     }
      */
     public function around()
@@ -80,8 +109,8 @@ class EventsController extends AppController
         }
         $events = [];
         foreach ($data->events->event as $id => $event) {
-            if (!empty($event->performers)) {
-                if (empty($event->venue_address)) {
+            if (!empty((array)$event->performers)) {
+                if (empty((array)$event->venue_address)) {
                     $latitude = $event->latitude;
                     $longitude = $event->longitude;
                     $address = $this->GoogleMaps->latLngToAddress($latitude, $longitude)->results[0]->formatted_address;
@@ -126,47 +155,38 @@ class EventsController extends AppController
      * @apiSuccessExample Success-Response:
      *     HTTP/1.1 200 OK
      *     {
-     *        "artists":[
-     *           {
-     *              "id":1,
-     *              "name":"Muse",
-     *              "created":"2000-12-12",
-     *              "picture":"http://spotify.com/picture/weqweziu",
-     *              "socialNetworks":[
-     *                 {
-     *                   "name":"facebook",
-     *                   "url":"https://facebook.com/muse"
+     *         "artists":[
+     *             {
+     *                 "picture":"https://i.scdn.co/image/7d0ec00334f74076dbfc12902d70b74557c4cefd",
+     *                 "socialNetworks":{
+     *                     "spotify":"https://open.spotify.com/artist/6mdiAmATAx73kdxrNrnlao",
+     *                     "bandsintown":"https://www.bandsintown.com/a/1301?came_from=267&app_id=Restival",
+     *                     "facebook":"https://www.facebook.com/ironmaiden"
      *                 },
-     *                 {
-     *                   "name":"twitter",
-     *                   "url":"https://twitter.com/muse"
+     *                 "country":"GB",
+     *                 "lifespan":"1975-12-25",
+     *                 "type":"Group",
+     *                 "disambiguation":"English heavy metal band",
+     *                 "name":"Iron Maiden"
+     *             },
+     *             {
+     *                 "picture":"https://i.scdn.co/image/b56bd1ee232e6d40431745fe9b304b270caaa609",
+     *                 "socialNetworks":{
+     *                     "spotify":"https://open.spotify.com/artist/37394IP6uhnjIpsawpMu4l",
+     *                     "bandsintown":"https://www.bandsintown.com/a/201?came_from=267&app_id=Restival",
+     *                     "facebook":"https://www.facebook.com/killswitchengage"
      *                 },
-     *                 {
-     *                   "name":"instagram",
-     *                   "url":"https://instagram.com/muse"
-     *                 }
-     *              ]
-     *           },
-     *           {
-     *              "id":5000,
-     *              "name":"Alt-J",
-     *              "created":"2005-12-12",
-     *              "picture":"http://spotify.com/picture/altj",
-     *              "socialNetworks":[
-     *                 {
-     *                   "name":"facebook",
-     *                   "url":"https://facebook.com/altj"
-     *                 },
-     *                 {
-     *                   "name":"twitter",
-     *                   "url":"https://twitter.com/altj"
-     *                 }
-     *              ]
-     *           }
-     *        ]
+     *                 "country":"US",
+     *                 "lifespan":"1999",
+     *                 "type":"Group",
+     *                 "disambiguation":"",
+     *                 "name":"Killswitch Engage"
+     *             }
+     *         ]
      *     }
      *
      * @apiUse EventNotFound
+     * @apiUse PerformersNotFound
      */
     public function data()
     {
@@ -174,7 +194,7 @@ class EventsController extends AppController
         $data = $this->Eventful->data($id);
         $artists = [];
         if (empty((array)$data->performers)) {
-            throw new NotFoundException('No performers for this event');
+            throw new NotFoundException('Performers not found');
         }
         $perfomers = is_array($data->performers->performer) ? $data->performers->performer : $data->performers;
         foreach ($perfomers as $id => $performer) {
@@ -185,19 +205,24 @@ class EventsController extends AppController
                 $name = $artist->name;
             }
             $bit = $this->BandsInTown->getArtistByName($name);
-            $mb = $this->MusicBrainz->getArtistInformations($bit->mbid);
-            $artists[] = [
+            $artistTemp = [
                 'picture' => $artist->images[0]->url,
                 'socialNetworks' => [
                     'spotify' => $artist->external_urls->spotify,
                     'bandsintown' => $bit->url,
                     'facebook' => $bit->facebook_page_url
                 ],
-                'country' => $mb->country,
+
+            ];
+            if(!empty($bit->mbid)){
+                $mb = $this->MusicBrainz->getArtistInformations($bit->mbid);
+                $artistTemp = array_merge($artistTemp, ['country' => $mb->country,
                 'lifespan' => $mb->{'life-span'}->begin,
                 'type' => $mb->type,
-                'disambiguation' => $mb->disambiguation
-            ];
+                'disambiguation' => $mb->disambiguation]);
+            }
+            $artistTemp['name'] = $name;
+            $artists[] = $artistTemp;
 
         }
         $this->set(compact('artists'));
@@ -219,17 +244,18 @@ class EventsController extends AppController
      * @apiSuccessExample Success-Response:
      *     HTTP/1.1 200 OK
      *     {
-     *        "url":"http://spotify.com/preview/swag"
+     *        "url":"https://p.scdn.co/mp3-preview/52414dfddfb72762158e02fff5f129a0a544a61f?cid=919405e7e15a4ecd9d4e4e55c178ce91"
      *     }
      *
      * @apiUse EventNotFound
+     * @apiUse PerformersNotFound
      */
     public function music()
     {
         $id = $this->request->getParam('id');
         $data = $this->Eventful->data($id);
         if (empty((array)$data->performers)) {
-            throw new NotFoundException('No performers for this event');
+            throw new NotFoundException('Performers not found');
         }
         $perfomers = is_array($data->performers->performer) ? $data->performers->performer : $data->performers;
         $onePreviewPerArtistMax = [];
