@@ -16,9 +16,32 @@ class BandsInTownComponent extends Component
 {
     private $base = 'https://rest.bandsintown.com';
 
-    public function getEventsByArtist($name)
+    public function getArtistByName($name)
     {
         $file = new File('tmp/bandsintown/' . $name);
+        if($file->exists()){
+            return json_decode($file->read());
+        }
+        $client = new Client([
+            'headers' => [
+                'Accept' => 'application/json'
+            ]
+        ]);
+        $data = $client->get(
+            $this->base . '/artists/' . $name,
+            [
+                'app_id' => 'Restival',
+            ]
+        )->body();
+        $file = new File('tmp/bandsintown/' . $name, true);
+        $file->write($data);
+        $file->close();
+        return json_decode($data);
+    }
+
+    public function getEventsByArtist($name)
+    {
+        $file = new File('tmp/bandsintown/events' . $name);
         if($file->exists()){
             return json_decode($file->read());
         }
@@ -33,7 +56,7 @@ class BandsInTownComponent extends Component
                 'app_id' => 'Restival',
             ]
         )->body();
-        $file = new File('tmp/bandsintown/' . $name, true);
+        $file = new File('tmp/bandsintown/events' . $name, true);
         $file->write($data);
         $file->close();
         return json_decode($data);

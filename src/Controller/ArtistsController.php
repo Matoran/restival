@@ -106,14 +106,14 @@ class ArtistsController extends AppController
     public function events()
     {
         $name = $this->request->getParam('name');
-        $result = $this->Spotify->getArtistByName($name, false);
-        if(!empty($result)){
+        $result = $this->Spotify->getArtistByName($name);
+        if (!empty($result)) {
             $name = $result->name;
         }
         $result = $this->BandsInTown->getEventsByArtist($name);
         $events = [];
-        if(!isset($result->errors)){
-            foreach ($result as $event){
+        if (!isset($result->errors)) {
+            foreach ($result as $event) {
                 $events[] = [
                     'id' => $event->id,
                     'name' => $event->venue->name,
@@ -125,6 +125,9 @@ class ArtistsController extends AppController
 
                 ];
             }
+        }
+        if (empty($events)) {
+            throw new NotFoundException('Events not found');
         }
         $this->set(compact('events'));
         $this->set('_serialize', ['events']);
@@ -162,11 +165,11 @@ class ArtistsController extends AppController
         $id = $this->Spotify->getArtistByName($name)->id;
         $previews = Hash::filter(Hash::extract($this->Spotify->getTopTracksById($id), '{n}.preview_url'));
         shuffle($previews);
-        if(!empty($previews)){
+        if (!empty($previews)) {
             $url = $previews[0];
             $this->set(compact('url'));
             $this->set('_serialize', ['url']);
-        }else{
+        } else {
             throw new NotFoundException('Preview not found');
         }
     }
@@ -211,16 +214,25 @@ class ArtistsController extends AppController
      *
      * @apiUse ArtistNotFound
      */
-    public function data(){
+    public function data()
+    {
         $name = $this->request->getParam('name');
         $artist = $this->Spotify->getArtistByName($name);
-        $name =  $artist->name;
+        $name = $artist->name;
+        $bit = $this->BandsInTown->getArtistByName($name);
+        $mb = $this->MusicBrainz->getArtistInformations($bit->mbid);
         $picture = $artist->images[0]->url;
         $socialNetworks = [
-                'spotify' => $artist->external_urls->spotify
+            'spotify' => $artist->external_urls->spotify,
+            'bandsintown' => $bit->url,
+            'facebook' => $bit->facebook_page_url
         ];
-        $this->set(compact('name', 'picture', 'socialNetworks'));
-        $this->set('_serialize', ['name', 'picture', 'socialNetworks']);
+        $country = $mb->country;
+        $lifespan = $mb->{'life-span'}->begin;
+        $type = $mb->type;
+        $disambiguation = $mb->disambiguation;
+        $this->set(compact('name', 'picture', 'socialNetworks', 'country', 'lifespan', 'type', 'disambiguation'));
+        $this->set('_serialize', ['name', 'picture', 'socialNetworks', 'country', 'lifespan', 'type', 'disambiguation']);
     }
 
 }

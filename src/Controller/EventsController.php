@@ -17,6 +17,7 @@ use App\Controller\AppController;
 use App\Controller\Component\BandsInTownComponent;
 use App\Controller\Component\EventfulComponent;
 use App\Controller\Component\GoogleMapsComponent;
+use App\Controller\Component\MusicBrainzComponent;
 use App\Controller\Component\SpotifyComponent;
 use Cake\Event\Event;
 use Cake\Network\Exception\NotFoundException;
@@ -27,6 +28,7 @@ use Cake\Utility\Hash;
  * @property bool|EventfulComponent Eventful
  * @property bool|BandsInTownComponent BandsInTown
  * @property bool|GoogleMapsComponent GoogleMaps
+ * @property bool|MusicBrainzComponent MusicBrainz
  */
 class EventsController extends AppController
 {
@@ -68,13 +70,17 @@ class EventsController extends AppController
      *       "error": "AddressNotFound"
      *     }
      */
-    public function around(){
+    public function around()
+    {
         $address = $this->request->getParam('address');
         $latLng = $this->GoogleMaps->getLatLngFromAddress($address);
-        $data = $this->Eventful->around($latLng['location']->lat, $latLng['location']->lng, $latLng['radius'])->events;
+        $data = $this->Eventful->around($latLng['location']->lat, $latLng['location']->lng, $latLng['radius']);
+        if ($data->total_items == 0) {
+            throw new NotFoundException('Events not found');
+        }
         $events = [];
-        foreach ($data->event as $id => $event){
-            if(!empty($event->performers)) {
+        foreach ($data->events->event as $id => $event) {
+            if (!empty($event->performers)) {
                 if (empty($event->venue_address)) {
                     $latitude = $event->latitude;
                     $longitude = $event->longitude;
@@ -167,26 +173,31 @@ class EventsController extends AppController
         $id = $this->request->getParam('id');
         $data = $this->Eventful->data($id);
         $artists = [];
+        if (empty((array)$data->performers)) {
+            throw new NotFoundException('No performers for this event');
+        }
         $perfomers = is_array($data->performers->performer) ? $data->performers->performer : $data->performers;
-        foreach ($perfomers as $id => $performer){
+        foreach ($perfomers as $id => $performer) {
             $name = $performer->name;
-            $result = $this->Spotify->getArtistByName($name, false);
-            if(!empty($result)){
-                $id = $result->id;
-                $artist = $this->Spotify->getArtistById($id);
-                $artistTemp = [
-                    'name' => $artist->name,
-                    'socialNetworks' => [
-                        'spotify' => $artist->external_urls->spotify
-                    ]
-                ];
-                if(isset($artist->images[0])){
-                    $artistTemp['picture'] = $artist->images[0]->url;
-                }
-                $artists[] = $artistTemp;
-            }else{
-                $artists[]['name'] = $name;
+
+            $artist = $this->Spotify->getArtistByName($name, false);
+            if (!empty($artist)) {
+                $name = $artist->name;
             }
+            $bit = $this->BandsInTown->getArtistByName($name);
+            $mb = $this->MusicBrainz->getArtistInformations($bit->mbid);
+            $artists[] = [
+                'picture' => $artist->images[0]->url,
+                'socialNetworks' => [
+                    'spotify' => $artist->external_urls->spotify,
+                    'bandsintown' => $bit->url,
+                    'facebook' => $bit->facebook_page_url
+                ],
+                'country' => $mb->country,
+                'lifespan' => $mb->{'life-span'}->begin,
+                'type' => $mb->type,
+                'disambiguation' => $mb->disambiguation
+            ];
 
         }
         $this->set(compact('artists'));
@@ -213,14 +224,18 @@ class EventsController extends AppController
      *
      * @apiUse EventNotFound
      */
-    public function music(){
+    public function music()
+    {
         $id = $this->request->getParam('id');
         $data = $this->Eventful->data($id);
+        if (empty((array)$data->performers)) {
+            throw new NotFoundException('No performers for this event');
+        }
         $perfomers = is_array($data->performers->performer) ? $data->performers->performer : $data->performers;
         $onePreviewPerArtistMax = [];
-        foreach ($perfomers as $id => $performer){
+        foreach ($perfomers as $id => $performer) {
             $result = $this->Spotify->getArtistByName($performer->name, false);
-            if(!empty($result)) {
+            if (!empty($result)) {
                 $id = $result->id;
                 $previews = Hash::filter(Hash::extract($this->Spotify->getTopTracksById($id), '{n}.preview_url'));
                 shuffle($previews);
@@ -229,12 +244,12 @@ class EventsController extends AppController
                 }
             }
         }
-        if(!empty($onePreviewPerArtistMax)){
+        if (!empty($onePreviewPerArtistMax)) {
             shuffle($onePreviewPerArtistMax);
             $url = $onePreviewPerArtistMax[0];
             $this->set(compact('url'));
             $this->set('_serialize', ['url']);
-        }else{
+        } else {
             throw new NotFoundException('Preview not found');
         }
     }

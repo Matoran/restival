@@ -25,19 +25,15 @@
 
     <!-- Add to homescreen for Chrome on Android -->
     <meta name="mobile-web-app-capable" content="yes">
-    <link rel="icon" sizes="192x192" href="images/android-desktop.png">
 
     <!-- Add to homescreen for Safari on iOS -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="apple-mobile-web-app-title" content="Material Design Lite">
-    <link rel="apple-touch-icon-precomposed" href="images/ios-desktop.png">
 
     <!-- Tile icon for Win8 (144x144 + tile color) -->
-    <meta name="msapplication-TileImage" content="images/touch/ms-touch-icon-144x144-precomposed.png">
     <meta name="msapplication-TileColor" content="#3372DF">
 
-    <link rel="shortcut icon" href="images/favicon.png">
 
     <!-- SEO: If your mobile URL is different from the desktop URL, add a canonical link to the desktop page https://developers.google.com/webmasters/smartphone-sites/feature-phones -->
     <!--
@@ -154,6 +150,38 @@
     var divMusic = $('#music');
     var type;
     var search;
+    function hideAll(){
+        divEvents.hide();
+        divEvent.hide();
+        divMusic.hide();
+    }
+    hideAll();
+
+    function showError(error, div){
+        /*hideAll();
+        divEvents.html('');
+        divEvent.html('');
+        divMusic.html('');*/
+        div.html(error);
+        div.show();
+
+    }
+
+    function artistToHtml(artist){
+        var content = '<img src="' + artist.picture + '" width="100%" alt="artist picture">';
+        content += '<ul>';
+        if(artist.socialNetworks != null){
+            content += '<li><a href="' + artist.socialNetworks.spotify + '">Spotify</a></li>';
+            content += '<li><a href="' + artist.socialNetworks.facebook + '">Facebook</a></li>';
+            content += '<li><a href="' + artist.socialNetworks.bandsintown + '">BandsInTown</a></li>';
+        }
+        content += '<li>type: ' + artist.type + '</li>';
+        content += '<li>lifespan: ' + artist.lifespan + '</li>';
+        content += '<li>disambiguation: ' + artist.disambiguation + '</li>';
+        content += '<li>country: ' + artist.country + '</li>';
+        content += '</ul>';
+        return content;
+    }
 
 
     function playMusic(url) {
@@ -170,13 +198,15 @@
                 console.log(music);
                 console.log("success");
             })
-            .fail(function () {
-                divMusic.html('no preview sorry');
+            .fail(function (error) {
+                console.log(error);
+                showError(error.responseJSON.message, divMusic);
                 console.log("error");
             })
             .always(function () {
                 console.log("complete");
             });
+        divMusic.show();
     }
 
     function showArtistEvent(id){
@@ -196,20 +226,20 @@
                 content += '<h1>' + event.name + ' (' + event.date + ')</h1>';
                 content += '<h2>' + event.address + ' (' + event.place + ')</h2>';
                 content += '<ul><li>' + artist.name + '</li></ul>';
-                content += '<img src="' + artist.picture + '" width="100%" alt="artist picture">';
-                if(artist.socialNetworks != null){
-                    content += '<a href="' + artist.socialNetworks.spotify + '">Spotify</a>';
-                }
+                content += artistToHtml(artist);
                 divEvent.html(content);
+                playMusic("/artists/" + search + "/music");
             })
             .fail(function (error) {
+                showError(error.responseJSON.message, divEvent);
                 console.log(error);
                 console.log("error");
             })
             .always(function () {
                 console.log("complete");
             });
-        playMusic("/artists/" + search + "/music");
+        divEvent.show();
+
     }
 
     function showEventEvents(id){
@@ -230,24 +260,20 @@
                 content += '<h3>Line Up</h3>';
                 console.log(artists);
                 artists.forEach(function (artist) {
-                    content += '<ul><li>' + artist.name + '</li></ul>';
-                    console.log(artist.picture);
-                    if(artist.picture != null){
-                        content += '<img src="' + artist.picture + '" width="100%" alt="artist picture">';
-                    }
-                    if(artist.socialNetworks != null){
-                        content += '<a href="' + artist.socialNetworks.spotify + '">Spotify</a>';
-                    }
+                    content += artistToHtml(artist);
                 });
                 divEvent.html(content);
             })
             .fail(function (error) {
+
+                showError(error.responseJSON.message, divEvent);
                 console.log(error);
                 console.log("error");
             })
             .always(function () {
                 console.log("complete");
             });
+        divEvent.show();
         playMusic("/events/" + event.id + "/music");
     }
 
@@ -263,6 +289,7 @@
     $('form').submit(function (event) {
         event.preventDefault();
         search = $('#search').val();
+        hideAll();
         type = $('input[name=options]:checked').val();
         var url;
         if (type === "artist") {
@@ -271,6 +298,12 @@
             url = "/events/around/" + search;
         }
         console.log(base + url);
+        markers.forEach(function (marker) {
+            marker.setMap(null);
+        });
+        if (markerCluster != null) {
+            markerCluster.clearMarkers();
+        }
         $.ajax({
             type: 'GET',
             url: base + url,
@@ -291,9 +324,7 @@
                     map.fitBounds(bounds);
                 });
 
-                markers.forEach(function (marker) {
-                    marker.setMap(null);
-                });
+
                 markers = locations.map(function (location, i) {
                     var marker = new google.maps.Marker({
                         position: location,
@@ -307,10 +338,6 @@
                     });
                     return marker;
                 });
-
-                if (markerCluster != null) {
-                    markerCluster.clearMarkers();
-                }
                 // Add a marker clusterer to manage the markers.
                 markerCluster = new MarkerClusterer(map, markers,
                     {imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'});
@@ -328,12 +355,14 @@
                 });
                 console.log("success");
             })
-            .fail(function () {
+            .fail(function (error) {
+                showError(error.responseJSON.message, divEvents);
                 console.log("error");
             })
             .always(function () {
                 console.log("complete");
             });
+
 
     });
 </script>
