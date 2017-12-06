@@ -9,6 +9,9 @@
  *     {
  *       "error": "EventNotFound"
  *     }
+ */
+
+/**
  * @apiDefine PerformersNotFound
  *
  * @apiError PerformersNotFound The event has not performers.
@@ -19,7 +22,6 @@
  *       "error": "PerformersNotFound"
  *     }
  */
-
 namespace App\Controller;
 
 use App\Controller\AppController;
